@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Quiz Generator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+
+/* BACKGROUND */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    color: white;
+    background: radial-gradient(circle at 20% 20%, rgba(0,114,255,0.25), transparent 40%),
+                radial-gradient(circle at 80% 30%, rgba(255,0,150,0.2), transparent 40%),
+                radial-gradient(circle at 50% 80%, rgba(0,255,200,0.15), transparent 40%),
+                #0f0c29;
+}
+
+/* HEADER */
+h1 {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 36px;
+}
+
+/* INPUT */
+.container {
+    text-align: center;
+}
+
+textarea {
+    width: 55%;
+    height: 140px;
+    padding: 15px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    outline: none;
+}
+
+/* BUTTONS */
+button {
+    margin: 10px;
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.generate-btn {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    color: white;
+}
+
+.sample-btn {
+    background: linear-gradient(135deg, #f7971e, #ffd200);
+    color: black;
+}
+
+/* OUTPUT */
+.output {
+    width: 60%;
+    margin: 40px auto;
+}
+
+/* CARD */
+.card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+/* OPTION */
+.option {
+    padding: 10px;
+    margin: 6px 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.option:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* RESULT COLORS */
+.correct {
+    background: rgba(0,255,100,0.5);
+}
+
+.wrong {
+    background: rgba(255,0,0,0.5);
+}
+
+/* SCORE */
+.score {
+    text-align: center;
+    font-size: 20px;
+    margin-top: 20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>AI Quiz Generator</h1>
+
+<div class="container">
+    <button class="sample-btn" onclick="loadSample()">Load Sample</button><br>
+    <textarea id="inputText" placeholder="Paste your passage here..."></textarea><br>
+    <button class="generate-btn" onclick="generate()">Generate Quiz</button>
+</div>
+
+<div class="output" id="output"></div>
+
+<script>
+
+let score = 0;
+let total = 0;
+
+function loadSample() {
+    document.getElementById("inputText").value =
+    `Artificial Intelligence is a field of computer science that enables machines to perform tasks requiring human intelligence. It includes machine learning and deep learning. AI is used in healthcare, finance, and self-driving cars.`;
+}
+
+function selectOption(el, correct, selected, index) {
+    if (el.classList.contains("answered")) return;
+
+    const parent = el.parentElement;
+    const options = parent.querySelectorAll(".option");
+
+    options.forEach(opt => opt.classList.add("answered"));
+
+    if (selected === correct) {
+        el.classList.add("correct");
+        score++;
+    } else {
+        el.classList.add("wrong");
+
+        options.forEach(opt => {
+            if (opt.innerText === correct) {
+                opt.classList.add("correct");
+            }
+        });
+    }
+
+    // update score display
+    document.getElementById("score").innerText = `Score: ${score}/${total}`;
+}
+
+async function generate() {
+    const text = document.getElementById("inputText").value;
+
+    document.getElementById("output").innerHTML = `
+        <div class="card">Generating quiz... ⏳</div>
+    `;
+
+    const res = await fetch("http://127.0.0.1:5000/generate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({text})
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+        document.getElementById("output").innerHTML =
+            `<div class="card">Error: ${data.error}</div>`;
+        return;
+    }
+
+    score = 0;
+    total = data.mcqs.length;
+
+    document.getElementById("output").innerHTML = `
+
+    <div class="card">
+        <b>Quiz</b><br><br>
+
+        ${data.mcqs.map((mcq, i) => `
+            <div style="margin-bottom:25px;">
+                <b>Q${i+1}: ${mcq.question}</b><br><br>
+
+                ${mcq.options.map(opt => `
+                    <div class="option" onclick="selectOption(this, '${mcq.answer}', '${opt}', ${i})">
+                        ${opt}
+                    </div>
+                `).join("")}
+
+            </div>
+        `).join("")}
+
+        <div id="score" class="score">Score: 0/${total}</div>
+
+    </div>
+    `;
+}
+
+</script>
+
+</body>
+</html>
