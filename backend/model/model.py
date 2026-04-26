@@ -1,68 +1,82 @@
 import random
 import spacy
 
-# load NLP model
 nlp = spacy.load("en_core_web_sm")
 
 
 # -----------------------------
-# Extract definition pairs
+# Clean sentence list
 # -----------------------------
-def extract_definitions(text):
+def get_sentences(text):
     doc = nlp(text)
-    pairs = []
-
-    for sent in doc.sents:
-        sentence = sent.text.strip()
-
-        if " is " in sentence:
-            parts = sentence.split(" is ")
-
-            subject = parts[0].strip()
-            definition = parts[1].strip()
-
-            # clean subject (remove stopwords noise)
-            if len(subject.split()) <= 6:
-                pairs.append((subject, definition))
-
-    return pairs
+    return [sent.text.strip() for sent in doc.sents if len(sent.text.strip()) > 20]
 
 
 # -----------------------------
-# Extract named entities
+# Extract entities
 # -----------------------------
-def extract_entities(text):
-    doc = nlp(text)
-    entities = list(set([ent.text for ent in doc.ents]))
-    return entities
+def extract_entities(doc):
+    return list(set([ent.text for ent in doc.ents]))
 
 
 # -----------------------------
-# Generate MCQs
+# Generate MCQs (IMPROVED)
 # -----------------------------
 def generate_mcqs(text, num=5):
-    definitions = extract_definitions(text)
-    entities = extract_entities(text)
+    doc = nlp(text)
+    sentences = get_sentences(text)
+    entities = extract_entities(doc)
 
     mcqs = []
 
-    for subject, definition in definitions:
+    for sent in sentences:
         if len(mcqs) >= num:
             break
 
-        question = f"What is {subject}?"
-        correct = definition.capitalize()
+        sentence = sent.strip()
 
-        # distractors from entities
+        # ------------------ TYPE 1: Definition ------------------
+        if " is " in sentence:
+            parts = sentence.split(" is ")
+            subject = parts[0].strip()
+            definition = parts[1].strip()
+
+            if len(subject.split()) <= 6:
+                question = f"What is {subject}?"
+                correct = definition.capitalize()
+
+        # ------------------ TYPE 2: Usage ------------------
+        elif " used " in sentence:
+            words = sentence.split()
+            subject = words[0]
+
+            question = f"What is {subject} used for?"
+            correct = sentence.capitalize()
+
+        # ------------------ TYPE 3: Location ------------------
+        elif " occurs " in sentence or " occurs in " in sentence:
+            words = sentence.split()
+            subject = words[0]
+
+            question = f"Where does {subject} occur?"
+            correct = sentence.capitalize()
+
+        # ------------------ TYPE 4: General ------------------
+        else:
+            # skip weak sentences
+            continue
+
+        # ------------------ DISTRACTORS ------------------
         distractors = []
+
         for ent in entities:
             if ent.lower() not in correct.lower() and len(distractors) < 3:
                 distractors.append(ent)
 
         fallback = [
+            "A scientific concept",
             "A natural process",
-            "A scientific method",
-            "A theoretical concept"
+            "A technical system"
         ]
 
         while len(distractors) < 3:
