@@ -2,208 +2,464 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AI Quiz Generator</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizForge AI — Intelligent MCQ Generator</title>
+<meta name="description" content="Generate high-quality multiple choice questions from any text using AI">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* ── CSS RESET & VARIABLES ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* BACKGROUND */
+:root {
+  --bg-primary: #0a0a1a;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --bg-input: rgba(255,255,255,0.06);
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-focus: rgba(99,102,241,0.5);
+  --text-primary: #f0f0f5;
+  --text-secondary: rgba(240,240,245,0.6);
+  --text-muted: rgba(240,240,245,0.35);
+  --accent-1: #6366f1;
+  --accent-2: #8b5cf6;
+  --accent-3: #a78bfa;
+  --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+  --gradient-success: linear-gradient(135deg, #10b981, #34d399);
+  --gradient-error: linear-gradient(135deg, #ef4444, #f87171);
+  --gradient-warn: linear-gradient(135deg, #f59e0b, #fbbf24);
+  --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 body {
-    margin: 0;
-    font-family: 'Inter', sans-serif;
-    color: white;
-    background: radial-gradient(circle at 20% 20%, rgba(0,114,255,0.25), transparent 40%),
-                radial-gradient(circle at 80% 30%, rgba(255,0,150,0.2), transparent 40%),
-                radial-gradient(circle at 50% 80%, rgba(0,255,200,0.15), transparent 40%),
-                #0f0c29;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* HEADER */
-h1 {
-    text-align: center;
-    margin-top: 30px;
-    font-size: 36px;
+/* ── ANIMATED BACKGROUND ── */
+.bg-effects {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.bg-orb {
+  position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+.bg-orb:nth-child(1) { width: 600px; height: 600px; background: #6366f1; top: -10%; left: -5%; animation-delay: 0s; }
+.bg-orb:nth-child(2) { width: 500px; height: 500px; background: #8b5cf6; top: 40%; right: -10%; animation-delay: -7s; }
+.bg-orb:nth-child(3) { width: 400px; height: 400px; background: #06b6d4; bottom: -5%; left: 30%; animation-delay: -14s; }
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.05); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
 }
 
-/* INPUT */
-.container {
-    text-align: center;
+/* ── LAYOUT ── */
+.app-container {
+  position: relative; z-index: 1;
+  max-width: 800px; margin: 0 auto; padding: 40px 24px 80px;
 }
 
+/* ── HEADER ── */
+.header {
+  text-align: center; margin-bottom: 48px;
+  animation: fadeInDown 0.6s ease-out;
+}
+.header-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 100px; padding: 6px 16px; font-size: 12px;
+  font-weight: 600; color: var(--accent-3); letter-spacing: 0.5px;
+  margin-bottom: 16px; text-transform: uppercase;
+}
+.header-badge .dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite; }
+.header h1 {
+  font-size: clamp(28px, 5vw, 42px); font-weight: 800;
+  background: var(--gradient-primary); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text;
+  line-height: 1.2; margin-bottom: 10px;
+}
+.header p { color: var(--text-secondary); font-size: 15px; font-weight: 400; }
+
+/* ── INPUT SECTION ── */
+.input-section {
+  background: var(--bg-card); backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-xl);
+  padding: 28px; margin-bottom: 32px;
+  animation: fadeInUp 0.6s ease-out 0.1s both;
+}
+.input-section label {
+  display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.textarea-wrap {
+  position: relative; margin-bottom: 20px;
+}
 textarea {
-    width: 55%;
-    height: 140px;
-    padding: 15px;
-    border-radius: 10px;
-    border: none;
-    background: rgba(255,255,255,0.1);
-    color: white;
-    outline: none;
+  width: 100%; min-height: 160px; padding: 16px; font-size: 14px; line-height: 1.7;
+  font-family: inherit; color: var(--text-primary);
+  background: var(--bg-input); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); outline: none; resize: vertical;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+textarea::placeholder { color: var(--text-muted); }
+.char-count {
+  position: absolute; bottom: 10px; right: 14px;
+  font-size: 11px; color: var(--text-muted); pointer-events: none;
 }
 
-/* BUTTONS */
-button {
-    margin: 10px;
-    padding: 12px 22px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
+/* ── CONTROLS ROW ── */
+.controls {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+}
+.slider-group {
+  display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px;
+}
+.slider-group span { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+.slider-group input[type="range"] {
+  flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+  background: rgba(255,255,255,0.1); border-radius: 4px; outline: none;
+}
+.slider-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent-1); cursor: pointer; border: 2px solid var(--bg-primary);
+  box-shadow: 0 0 10px rgba(99,102,241,0.4);
+}
+.num-badge {
+  background: rgba(99,102,241,0.15); color: var(--accent-3);
+  font-weight: 700; font-size: 14px; padding: 4px 12px;
+  border-radius: 100px; min-width: 32px; text-align: center;
 }
 
-.generate-btn {
-    background: linear-gradient(135deg, #00c6ff, #0072ff);
-    color: white;
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 24px; border: none; border-radius: var(--radius-md);
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition); white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--gradient-primary); color: white;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+}
+.btn-primary:hover { box-shadow: 0 6px 30px rgba(99,102,241,0.45); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-secondary {
+  background: rgba(255,255,255,0.06); color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+.btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+/* ── LOADING ── */
+.loading-container {
+  text-align: center; padding: 60px 20px;
+  animation: fadeIn 0.4s ease-out;
+}
+.spinner {
+  width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.08);
+  border-top-color: var(--accent-1); border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto 20px;
+}
+.loading-container p { color: var(--text-secondary); font-size: 15px; }
+.loading-container .sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+/* ── QUIZ CARD ── */
+.quiz-section { animation: fadeInUp 0.5s ease-out; }
+.quiz-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.quiz-header h2 { font-size: 20px; font-weight: 700; }
+.progress-bar-wrap {
+  flex: 1; min-width: 120px; max-width: 200px;
+  background: rgba(255,255,255,0.06); border-radius: 100px;
+  height: 8px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--gradient-primary); border-radius: 100px;
+  transition: width 0.5s ease-out; width: 0%;
 }
 
-.sample-btn {
-    background: linear-gradient(135deg, #f7971e, #ffd200);
-    color: black;
+.mcq-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg); padding: 24px; margin-bottom: 16px;
+  transition: all var(--transition);
+  animation: fadeInUp 0.4s ease-out both;
+}
+.mcq-card .q-number {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--accent-3); margin-bottom: 8px;
+}
+.mcq-card .q-text {
+  font-size: 16px; font-weight: 600; line-height: 1.5; margin-bottom: 16px;
 }
 
-/* OUTPUT */
-.output {
-    width: 60%;
-    margin: 40px auto;
+/* ── OPTIONS ── */
+.option-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 12px 16px; margin-bottom: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); color: var(--text-primary);
+  font-family: inherit; font-size: 14px; text-align: left;
+  cursor: pointer; transition: all var(--transition);
 }
-
-/* CARD */
-.card {
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(20px);
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+.option-btn:hover:not(.disabled) {
+  background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.3);
+  transform: translateX(4px);
 }
-
-/* OPTION */
-.option {
-    padding: 10px;
-    margin: 6px 0;
-    background: rgba(255,255,255,0.1);
-    border-radius: 6px;
-    cursor: pointer;
+.option-btn .option-letter {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  transition: all var(--transition);
 }
-
-.option:hover {
-    background: rgba(255,255,255,0.2);
+.option-btn.correct {
+  background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4);
 }
-
-/* RESULT COLORS */
-.correct {
-    background: rgba(0,255,100,0.5);
+.option-btn.correct .option-letter {
+  background: var(--gradient-success); border-color: transparent; color: white;
 }
-
-.wrong {
-    background: rgba(255,0,0,0.5);
+.option-btn.wrong {
+  background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.35);
 }
-
-/* SCORE */
-.score {
-    text-align: center;
-    font-size: 20px;
-    margin-top: 20px;
+.option-btn.wrong .option-letter {
+  background: var(--gradient-error); border-color: transparent; color: white;
 }
+.option-btn.disabled { cursor: default; opacity: 0.65; }
+.option-btn.disabled.correct { opacity: 1; }
 
+/* ── SCORE CARD ── */
+.score-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); padding: 40px; text-align: center;
+  margin-top: 32px; animation: fadeInUp 0.5s ease-out;
+}
+.score-card .emoji { font-size: 48px; margin-bottom: 12px; }
+.score-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.score-card .score-value {
+  font-size: 48px; font-weight: 800;
+  background: var(--gradient-primary); -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; background-clip: text;
+  margin: 12px 0;
+}
+.score-card .score-label { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+
+/* ── ERROR ── */
+.error-card {
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius-lg); padding: 24px; text-align: center;
+  animation: fadeIn 0.4s ease-out;
+}
+.error-card .error-icon { font-size: 32px; margin-bottom: 8px; }
+.error-card p { color: rgba(248,113,113,0.9); font-size: 14px; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .app-container { padding: 24px 16px 60px; }
+  .input-section { padding: 20px; }
+  .mcq-card { padding: 18px; }
+  .controls { flex-direction: column; align-items: stretch; }
+  .quiz-header { flex-direction: column; align-items: flex-start; }
+  .progress-bar-wrap { max-width: 100%; }
+}
 </style>
 </head>
-
 <body>
 
-<h1>AI Quiz Generator</h1>
-
-<div class="container">
-    <button class="sample-btn" onclick="loadSample()">Load Sample</button><br>
-    <textarea id="inputText" placeholder="Paste your passage here..."></textarea><br>
-    <button class="generate-btn" onclick="generate()">Generate Quiz</button>
+<div class="bg-effects">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
 </div>
 
-<div class="output" id="output"></div>
+<div class="app-container">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-badge"><span class="dot"></span> AI-Powered</div>
+    <h1>QuizForge AI</h1>
+    <p>Transform any text into intelligent multiple-choice questions</p>
+  </header>
+
+  <!-- INPUT -->
+  <section class="input-section" id="inputSection">
+    <label for="inputText">Paste your text</label>
+    <div class="textarea-wrap">
+      <textarea id="inputText" placeholder="Paste any passage — technical, narrative, academic — and let AI generate meaningful quiz questions..." oninput="updateCharCount()"></textarea>
+      <span class="char-count" id="charCount">0 / 15,000</span>
+    </div>
+
+    <div class="controls">
+      <div class="slider-group">
+        <span>Questions:</span>
+        <input type="range" id="numSlider" min="1" max="10" value="5" oninput="document.getElementById('numBadge').textContent=this.value">
+        <span class="num-badge" id="numBadge">5</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="generateBtn" onclick="generate()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate Quiz
+      </button>
+      <button class="btn btn-secondary" onclick="loadSample()">Load Sample</button>
+    </div>
+  </section>
+
+  <!-- OUTPUT -->
+  <div id="output"></div>
+</div>
 
 <script>
+const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+let score = 0, total = 0, answered = 0;
 
-let score = 0;
-let total = 0;
-
-function loadSample() {
-    document.getElementById("inputText").value =
-    `Artificial Intelligence is a field of computer science that enables machines to perform tasks requiring human intelligence. It includes machine learning and deep learning. AI is used in healthcare, finance, and self-driving cars.`;
+function updateCharCount() {
+  const len = document.getElementById('inputText').value.length;
+  document.getElementById('charCount').textContent = len.toLocaleString() + ' / 15,000';
 }
 
-function selectOption(el, correct, selected, index) {
-    if (el.classList.contains("answered")) return;
+function loadSample() {
+  document.getElementById('inputText').value =
+`The Amazon Rainforest, often referred to as the "lungs of the Earth," produces approximately 20 percent of the world's oxygen. It spans across nine countries in South America, with Brazil containing about 60 percent of the forest. The Amazon River, which flows through the rainforest, is the largest river by discharge volume of water in the world. The rainforest is home to approximately 10 percent of all species on Earth, including jaguars, poison dart frogs, and pink river dolphins. Deforestation in the Amazon has been a major environmental concern, with approximately 17 percent of the forest lost in the last 50 years. Scientists like Thomas Lovejoy have warned that losing more than 25 percent of the Amazon could trigger a tipping point, converting large areas into savanna. Conservation efforts led by organizations such as the World Wildlife Fund aim to protect this vital ecosystem. In 2019, the Amazon experienced devastating fires that destroyed over 9,000 square kilometers of forest.`;
+  updateCharCount();
+}
 
-    const parent = el.parentElement;
-    const options = parent.querySelectorAll(".option");
+function selectOption(btn, qIndex, selectedOpt, correctAnswer) {
+  const card = btn.closest('.mcq-card');
+  const allBtns = card.querySelectorAll('.option-btn');
+  if (btn.classList.contains('disabled')) return;
 
-    options.forEach(opt => opt.classList.add("answered"));
+  allBtns.forEach(b => b.classList.add('disabled'));
+  answered++;
 
-    if (selected === correct) {
-        el.classList.add("correct");
-        score++;
-    } else {
-        el.classList.add("wrong");
+  if (selectedOpt === correctAnswer) {
+    btn.classList.add('correct');
+    score++;
+  } else {
+    btn.classList.add('wrong');
+    allBtns.forEach(b => {
+      if (b.dataset.value === correctAnswer) b.classList.add('correct');
+    });
+  }
 
-        options.forEach(opt => {
-            if (opt.innerText === correct) {
-                opt.classList.add("correct");
-            }
-        });
-    }
+  // Update progress
+  const fill = document.getElementById('progressFill');
+  if (fill) fill.style.width = (answered / total * 100) + '%';
 
-    // update score display
-    document.getElementById("score").innerText = `Score: ${score}/${total}`;
+  // Show score card when done
+  if (answered >= total) {
+    setTimeout(showScoreCard, 600);
+  }
+}
+
+function showScoreCard() {
+  const pct = Math.round(score / total * 100);
+  let emoji = '🎉', msg = 'Outstanding!';
+  if (pct < 40) { emoji = '📚'; msg = 'Keep Studying!'; }
+  else if (pct < 70) { emoji = '👍'; msg = 'Good Effort!'; }
+  else if (pct < 100) { emoji = '🌟'; msg = 'Great Job!'; }
+
+  const el = document.getElementById('scoreCard');
+  if (el) {
+    el.innerHTML = `
+      <div class="score-card">
+        <div class="emoji">${emoji}</div>
+        <h3>${msg}</h3>
+        <div class="score-value">${score}/${total}</div>
+        <div class="score-label">${pct}% correct</div>
+        <div class="btn-row" style="justify-content:center">
+          <button class="btn btn-primary" onclick="generate()">New Quiz</button>
+          <button class="btn btn-secondary" onclick="resetToInput()">Change Text</button>
+        </div>
+      </div>`;
+  }
+}
+
+function resetToInput() {
+  document.getElementById('output').innerHTML = '';
 }
 
 async function generate() {
-    const text = document.getElementById("inputText").value;
+  const text = document.getElementById('inputText').value.trim();
+  const num = parseInt(document.getElementById('numSlider').value);
+  const out = document.getElementById('output');
 
-    document.getElementById("output").innerHTML = `
-        <div class="card">Generating quiz... ⏳</div>
-    `;
+  if (text.length < 50) {
+    out.innerHTML = `<div class="error-card"><div class="error-icon">⚠️</div><p>Please enter at least a few sentences of text.</p></div>`;
+    return;
+  }
 
-    const res = await fetch("http://127.0.0.1:5000/generate", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({text})
+  // Show loading
+  document.getElementById('generateBtn').disabled = true;
+  out.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Generating your quiz...</p><div class="sub">Analyzing text & crafting questions with AI</div></div>`;
+
+  try {
+    const res = await fetch('http://127.0.0.1:5000/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text, num_questions: num })
     });
-
     const data = await res.json();
 
     if (data.error) {
-        document.getElementById("output").innerHTML =
-            `<div class="card">Error: ${data.error}</div>`;
-        return;
+      out.innerHTML = `<div class="error-card"><div class="error-icon">❌</div><p>${data.error}</p></div>`;
+      return;
     }
 
-    score = 0;
-    total = data.mcqs.length;
+    score = 0; answered = 0; total = data.mcqs.length;
 
-    document.getElementById("output").innerHTML = `
-
-    <div class="card">
-        <b>Quiz</b><br><br>
-
+    out.innerHTML = `
+      <div class="quiz-section">
+        <div class="quiz-header">
+          <h2>Your Quiz</h2>
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+        </div>
         ${data.mcqs.map((mcq, i) => `
-            <div style="margin-bottom:25px;">
-                <b>Q${i+1}: ${mcq.question}</b><br><br>
+          <div class="mcq-card" style="animation-delay:${i * 0.08}s">
+            <div class="q-number">Question ${i + 1} of ${total}</div>
+            <div class="q-text">${escapeHtml(mcq.question)}</div>
+            ${mcq.options.map((opt, j) => `
+              <button class="option-btn" data-value="${escapeAttr(opt)}"
+                onclick="selectOption(this, ${i}, '${escapeAttr(opt)}', '${escapeAttr(mcq.answer)}')">
+                <span class="option-letter">${LETTERS[j]}</span>
+                <span>${escapeHtml(opt)}</span>
+              </button>
+            `).join('')}
+          </div>
+        `).join('')}
+        <div id="scoreCard"></div>
+      </div>`;
 
-                ${mcq.options.map(opt => `
-                    <div class="option" onclick="selectOption(this, '${mcq.answer}', '${opt}', ${i})">
-                        ${opt}
-                    </div>
-                `).join("")}
-
-            </div>
-        `).join("")}
-
-        <div id="score" class="score">Score: 0/${total}</div>
-
-    </div>
-    `;
+  } catch (err) {
+    out.innerHTML = `<div class="error-card"><div class="error-icon">🔌</div><p>Could not connect to the server. Make sure the backend is running on port 5000.</p></div>`;
+  } finally {
+    document.getElementById('generateBtn').disabled = false;
+  }
 }
 
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escapeAttr(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 </script>
-
 </body>
 </html>
